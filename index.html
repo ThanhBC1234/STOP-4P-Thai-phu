@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hành Trình STOP 4P</title>
+    <style>
+        /* --- CẤU HÌNH CHUNG --- */
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none; -webkit-user-select: none;
+            transition: background 1.5s ease;
+        }
+        
+        .stage {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+            display: none;
+        }
+        
+        .stage.active {
+            opacity: 1;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- STAGE 1: STOP MONKEY --- */
+        #stage-1 { display: block; } 
+        #stage-1.active { display: block; }
+        #stage-1 .garden-scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        #stage-1 .fountain { position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); font-size: 100px; opacity: 0.8; z-index: 5; transition: opacity 1s; }
+        
+        #monkey-metaphor {
+            position: absolute; top: 15%; width: 100%; text-align: center;
+            font-size: 20px; font-weight: 600; color: #2e7d32;
+            padding: 0 20px; box-sizing: border-box; z-index: 15;
+            transition: opacity 0.5s ease; text-shadow: 0 0 10px rgba(255,255,255,0.9); line-height: 1.5;
+        }
+
+        #stage-1 #top-message-area { position: absolute; top: 18%; left: 0; width: 100%; text-align: center; z-index: 150; pointer-events: none; }
+        #stage-1 .safe-quote { font-size: 24px; font-weight: bold; color: #00695c; line-height: 1.6; text-shadow: 0 0 10px rgba(255,255,255,0.8); animation: floatUp 1.5s ease-out; }
+        #stage-1 #controls-container { position: absolute; bottom: 50px; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; z-index: 100; }
+        #stage-1 #countdown-display { height: 100px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; pointer-events: none; }
+        #stage-1 .count-number { font-size: 90px; color: #d84315; font-weight: 900; text-shadow: 2px 2px 0 white; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #stage-1 #stop-btn { width: 100px; height: 100px; border-radius: 50%; background-color: #ff5722; border: 5px solid white; color: white; font-size: 40px; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.3); transition: transform 0.1s, background 0.3s; display: flex; align-items: center; justify-content: center; -webkit-appearance: none; outline: none; }
+        #stage-1 #stop-btn:active { transform: scale(0.92); background-color: #d84315; }
+        #stage-1 #guide-text-s1 { color: #1b5e20; font-size: 16px; margin-top: 15px; text-align: center; max-width: 80%; min-height: 40px; font-weight: 500; }
+        #stage-1 #success-panel { display: none; flex-direction: column; align-items: center; text-align: center; padding: 0 20px; animation: fadeIn 1s; }
+        #stage-1 .congrats-text { color: #2e7d32; font-size: 18px; margin-bottom: 20px; line-height: 1.5; background: rgba(255,255,255,0.7); padding: 15px; border-radius: 15px; }
+        #stage-1 .next-btn { padding: 12px 35px; background: #00897b; color: white; border: none; border-radius: 30px; font-size: 18px; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; animation: pulseBtn 2s infinite; }
+        #stage-1 .monkey { position: absolute; font-size: 32px; z-index: 20; will-change: transform; }
+        #stage-1 .running { animation: chaoticJump 2.5s infinite ease-in-out alternate; }
+        #stage-1 .fade-out { transition: opacity 1.5s, transform 1.5s; opacity: 0; transform: scale(0); }
+
+        /* --- STAGE 2: DRAGON --- */
+        #stage-2 #instruction-dragon { position: absolute; top: 10%; width: 100%; font-size: 24px; color: #006064; text-align: center; font-weight: bold; transition: color 0.3s; z-index: 20; }
+        #stage-2 .game-scene { display: flex; align-items: center; justify-content: center; gap: 40px; transform: scale(0.95); margin-top: -50px; }
+        #stage-2 .dragon-container { position: relative; width: 150px; height: 180px; }
+        #stage-2 .head { position: absolute; top: 0; left: 20px; width: 95px; height: 85px; background-color: #66bb6a; border-radius: 45px 45px 25px 25px; z-index: 5; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.1); }
+        #stage-2 .eye { position: absolute; top: 35px; left: 55px; width: 14px; height: 8px; border-top: 3px solid #333; border-radius: 50% 50% 0 0; background: transparent; z-index: 6; }
+        #stage-2 .cheek { position: absolute; top: 48px; left: 58px; width: 14px; height: 8px; background-color: #ff8a80; border-radius: 50%; opacity: 0.6; z-index: 6; }
+        #stage-2 .mouth { position: absolute; top: 58px; left: 65px; z-index: 6; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #stage-2 .mouth.smile { width: 20px; height: 10px; background: transparent; border-bottom: 3px solid #333; border-radius: 0 0 50% 50%; transform: rotate(5deg); }
+        #stage-2 .mouth.blowing { width: 12px; height: 12px; background: #333; border: none; border-radius: 50%; top: 55px; left: 75px; }
+        #stage-2 .body { position: absolute; bottom: 0; left: 10px; width: 110px; height: 110px; background-color: #66bb6a; border-radius: 50px 50px 20px 20px; z-index: 3; }
+        #stage-2 .belly { position: absolute; bottom: 10px; left: 25px; width: 80px; height: 80px; background-color: #fff176; border-radius: 50%; z-index: 4; transform-origin: center bottom; transition: transform 0.2s ease-out; box-shadow: inset 0 0 10px rgba(255,160,0,0.2); }
+        #stage-2 .belly.inhaling { transform: scale(1.4); transition: transform 3s ease-out; }
+        #stage-2 .arm { position: absolute; top: 100px; width: 30px; height: 40px; background-color: #4caf50; border-radius: 20px; z-index: 5; }
+        #stage-2 .arm.left { left: 0; transform: rotate(30deg); }
+        #stage-2 .arm.right { right: 0; transform: rotate(-30deg); }
+        #stage-2 .fire-stream { position: absolute; top: 55px; left: 85px; width: 0; height: 30px; background: linear-gradient(90deg, #ff5722, #ffeb3b, rgba(255,255,255,0)); border-radius: 50px; opacity: 0; z-index: 10; transform-origin: left center; }
+        #stage-2 .fire-stream.active { animation: shootFire 1.5s ease-out infinite; }
+        #stage-2 .pinwheel-wrapper { position: relative; width: 150px; height: 250px; }
+        #stage-2 .pinwheel-container { position: relative; width: 160px; height: 160px; transition: transform 0.1s linear; }
+        #stage-2 .blade { position: absolute; width: 80px; height: 80px; border-radius: 50% 0 50% 0; top: 50%; left: 50%; transform-origin: 0 0; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        #stage-2 .b1 { transform: rotate(0deg); background-color: #ff8a80; }
+        #stage-2 .b2 { transform: rotate(90deg); background-color: #80cbc4; }
+        #stage-2 .b3 { transform: rotate(180deg); background-color: #90caf9; }
+        #stage-2 .b4 { transform: rotate(270deg); background-color: #ce93d8; }
+        #stage-2 .center-dot { position: absolute; width: 15px; height: 15px; background: #fff; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
+        #stage-2 .stick { width: 8px; height: 160px; background-color: #8d6e63; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: -1; border-radius: 4px; }
+        #stage-2 #interaction-area { position: absolute; bottom: 110px; padding: 15px 50px; background-color: white; border: 3px solid #4caf50; color: #4caf50; border-radius: 50px; cursor: pointer; font-size: 18px; font-weight: bold; box-shadow: 0 6px 15px rgba(0,0,0,0.1); transition: all 0.2s; outline: none; -webkit-appearance: none; z-index: 100; }
+        #stage-2 #interaction-area:active { transform: scale(0.95); background-color: #4caf50; color: white; }
+        #stage-2 #next-btn-dragon { position: absolute; bottom: 40px; padding: 12px 30px; background-color: #00838f; color: white; border: none; border-radius: 30px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.2s; outline: none; -webkit-appearance: none; z-index: 100; }
+
+        /* --- STAGE 3: BODY SCAN --- */
+        #stage-3 #guide-text-body { position: absolute; top: 10%; width: 85%; text-align: center; font-size: 21px; color: #004d40; font-weight: 600; min-height: 60px; transition: opacity 0.5s; text-shadow: 1px 1px 5px rgba(255,255,255,0.8); z-index: 10; }
+        #stage-3 #meditation-container { position: relative; width: 320px; height: 480px; margin-top: 30px; }
+        #stage-3 svg { width: 100%; height: 100%; filter: drop-shadow(0 15px 20px rgba(0,0,0,0.15)); }
+        #stage-3 .human-silhouette { fill: #ffffff; opacity: 0.85; }
+        #stage-3 .dot { position: absolute; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; transform: translate(-50%, -50%); transition: all 0.5s ease; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 5; display: none; }
+        #stage-3 .dot.active { display: block; background-color: #e57373; border: 3px solid white; animation: pulse-red 1.8s infinite ease-in-out; }
+        #stage-3 .dot.relaxed { display: block; background-color: #4db6ac; box-shadow: 0 0 20px #4db6ac; border: 2px solid #b2dfdb; animation: none; pointer-events: none; }
+        #stage-3 .ripple { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: rgba(77, 182, 172, 0.6); transform: translate(-50%, -50%); pointer-events: none; animation: ripple-effect 1.2s ease-out forwards; }
+        #stage-3 #action-buttons-body { display: none; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px; width: 100%; animation: fadeInUp 1s ease; z-index: 20; }
+        #stage-3 button { padding: 12px 30px; border-radius: 30px; font-size: 16px; font-weight: 600; cursor: pointer; width: 240px; border: none; transition: transform 0.2s; -webkit-appearance: none; }
+        #stage-3 #continue-btn-body { background-color: #00796b; color: white; box-shadow: 0 4px 10px rgba(0, 121, 107, 0.4); }
+        #stage-3 #restart-btn-body { background-color: rgba(255, 255, 255, 0.6); color: #004d40; border: 1px solid #004d40; }
+
+        /* --- STAGE 4: CAPYBARA CHECK-IN --- */
+        #stage-4 #selection-screen { text-align: center; transition: opacity 0.5s ease-out; width: 95%; max-width: 800px; }
+        #stage-4 h2 { font-size: 22px; margin-bottom: 5px; color: #ef6c00; }
+        #stage-4 .subtitle { font-size: 15px; color: #795548; margin-bottom: 20px; font-style: italic; }
+        #stage-4 .emotion-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 10px; }
+        #stage-4 .capy-card { background: white; border-radius: 20px; padding: 10px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border: 3px solid transparent; height: 140px; }
+        #stage-4 .capy-card:active { transform: scale(0.95); border-color: #ffcc80; }
+        #stage-4 .capy-img { width: 90px; height: 90px; object-fit: contain; margin-bottom: 8px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.1)); pointer-events: none; }
+        #stage-4 .capy-label { font-weight: bold; font-size: 14px; color: #8d6e63; }
+        #stage-4 #feedback-screen { display: none; text-align: center; opacity: 0; transition: opacity 1s ease-in; padding: 30px; background: rgba(255, 255, 255, 0.95); border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); max-width: 80%; }
+        #stage-4 .feedback-text { font-size: 20px; line-height: 1.5; color: #00695c; margin-bottom: 20px; }
+        #stage-4 .btn-next-capy { padding: 12px 30px; background-color: #ef6c00; color: white; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(239, 108, 0, 0.3); transition: transform 0.2s; }
+        @media (max-width: 400px) { #stage-4 .emotion-grid { grid-template-columns: repeat(2, 1fr); } #stage-4 .capy-card { height: 130px; } #stage-4 .capy-img { width: 80px; height: 80px; } }
+
+        /* --- STAGE 5: CLOUDS --- */
+        #stage-5 .sun { position: absolute; top: 40px; right: 40px; width: 70px; height: 70px; background: #FFD700; border-radius: 50%; box-shadow: 0 0 50px #FFD700; opacity: 0.9; }
+        #stage-5 #input-container-cloud { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 100; text-align: center; transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 85%; max-width: 400px; opacity: 1; pointer-events: auto; }
+        #stage-5 #input-container-cloud.hidden { opacity: 0; pointer-events: none; bottom: -300px; transform: translateX(-50%) scale(0.8); }
+        #stage-5 h2 { color: #00838F; margin-top: 0; margin-bottom: 10px; font-size: 22px; font-weight: 700; }
+        #stage-5 p { color: #555; font-size: 15px; line-height: 1.5; margin-bottom: 20px; }
+        #stage-5 input[type="text"] { padding: 12px; width: 100%; box-sizing: border-box; border: 2px solid #B2EBF2; border-radius: 12px; font-size: 16px; outline: none; margin-bottom: 15px; background: #fff; -webkit-appearance: none; }
+        #stage-5 input::placeholder { font-style: italic; color: #90A4AE; opacity: 0.8; }
+        #stage-5 .btn-primary { width: 100%; padding: 12px 0; background-color: #00BCD4; color: white; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); -webkit-appearance: none; margin-bottom: 10px; }
+        #stage-5 .btn-secondary { width: 100%; padding: 10px 0; background-color: transparent; color: #00838F; border: 2px solid #B2EBF2; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; -webkit-appearance: none; }
+        
+        /* Updated hint text style */
+        #stage-5 #hint-text-cloud { 
+            position: absolute; bottom: 15%; width: 100%; 
+            text-align: center; color: #006064; 
+            font-size: 20px; font-weight: 600; 
+            opacity: 0; transition: opacity 1s; 
+            pointer-events: none; text-shadow: 0 0 10px white; 
+            animation: pulse 2s infinite; 
+            padding: 0 20px; box-sizing: border-box; /* Prevent text clipping */
+        }
+        
+        #stage-5 #hint-text-cloud.show { opacity: 0.8; }
+        #stage-5 .cloud-wrapper { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); pointer-events: none; z-index: 50; }
+        #stage-5 .cloud-body { --cloud-color: #fff; background: var(--cloud-color); display: inline-block; min-width: 120px; max-width: 250px; padding: 15px 25px; border-radius: 50px; position: relative; color: #444; font-size: 16px; line-height: 1.4; text-align: center; box-shadow: 0 8px 15px rgba(0,0,0,0.1); word-wrap: break-word; white-space: normal; }
+        #stage-5 .cloud-body::before, #stage-5 .cloud-body::after { content: ''; background: var(--cloud-color); position: absolute; border-radius: 50%; z-index: -1; }
+        #stage-5 .cloud-body::before { width: 50px; height: 50px; top: -20px; left: 15px; }
+        #stage-5 .cloud-body::after { width: 60px; height: 60px; top: -30px; right: 15px; }
+        #stage-5 .flying-right { animation: meanderRight 20s linear forwards; }
+        #stage-5 .flying-left { animation: meanderLeft 22s linear forwards; }
+
+        /* --- STAGE 6: JAR --- */
+        #stage-6 { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; }
+        #stage-6.active { display: flex; }
+        #stage-6 #intro-screen-jar { text-align: center; padding: 20px; transition: opacity 0.5s; }
+        #stage-6 .instruction-text { font-size: 20px; line-height: 1.6; margin-bottom: 30px; max-width: 500px; color: #880e4f; }
+        #stage-6 .mantra { font-size: 24px; font-weight: bold; color: #d81b60; margin: 20px 0; font-style: italic; animation: glow 2s infinite alternate; }
+        #stage-6 #write-screen-jar { display: none; flex-direction: column; align-items: center; opacity: 0; transition: opacity 1s; }
+        #stage-6 .heart-note { position: relative; width: 300px; height: 270px; background-color: #ffcdd2; transform: rotate(-45deg); margin-top: 50px; margin-bottom: 50px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); animation: floatHeart 3s ease-in-out infinite; }
+        #stage-6 .heart-note::before, #stage-6 .heart-note::after { content: ""; position: absolute; width: 300px; height: 300px; background-color: #ffcdd2; border-radius: 50%; }
+        #stage-6 .heart-note::before { top: -150px; left: 0; }
+        #stage-6 .heart-note::after { left: 150px; top: 0; }
+        #stage-6 textarea { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); z-index: 10; width: 180px; height: 120px; background: transparent; border: none; outline: none; text-align: center; font-family: 'Segoe UI', cursive, sans-serif; font-size: 18px; color: #c62828; resize: none; }
+        #stage-6 textarea::placeholder { color: #ef9a9a; font-style: italic; }
+        #stage-6 #jar-screen-final { display: none; position: relative; width: 100%; height: 100%; align-items: center; justify-content: center; }
+        #stage-6 .jar { position: relative; width: 200px; height: 280px; background: rgba(255, 255, 255, 0.3); border: 4px solid #fff; border-radius: 20px 20px 50px 50px; box-shadow: 0 0 20px rgba(255,255,255,0.5); overflow: hidden; display: flex; align-items: flex-end; justify-content: center; z-index: 5; }
+        #stage-6 .jar::before { content: ''; position: absolute; top: -15px; left: 10px; right: 10px; height: 15px; background: #fff; border-radius: 5px; }
+        #stage-6 .small-heart { position: absolute; width: 40px; height: 40px; background-color: #e91e63; transform: rotate(-45deg); opacity: 0.9; }
+        #stage-6 .small-heart::before, #stage-6 .small-heart::after { content: ""; position: absolute; width: 40px; height: 40px; background-color: #e91e63; border-radius: 50%; }
+        #stage-6 .small-heart::before { top: -20px; left: 0; }
+        #stage-6 .small-heart::after { left: 20px; top: 0; }
+        #stage-6 .btn { padding: 15px 40px; background-color: #ec407a; color: white; border: none; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3); transition: transform 0.2s; z-index: 20; }
+        #stage-6 #final-message { position: absolute; bottom: 110px; font-size: 22px; color: #880e4f; text-align: center; opacity: 0; font-weight: bold; transition: opacity 2s; }
+        #stage-6 #continue-btn-jar { position: absolute; bottom: 40px; background-color: #ad1457; display: none; opacity: 0; transition: opacity 1s; }
+
+        /* ANIMATIONS CHUNG */
+        @keyframes chaoticJump { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(30px, -40px) rotate(10deg); } 50% { transform: translate(-20px, 40px) rotate(-10deg); } 75% { transform: translate(40px, -20px) rotate(5deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pulseBtn { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes floatUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-red { 0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(229, 115, 115, 0.7); } 70% { transform: translate(-50%, -50%) scale(1.2); box-shadow: 0 0 0 15px rgba(229, 115, 115, 0); } 100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(229, 115, 115, 0); } }
+        @keyframes ripple-effect { 0% { width: 20px; height: 20px; opacity: 0.8; } 100% { width: 250px; height: 250px; opacity: 0; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shootFire { 0% { width: 0; opacity: 0.8; } 20% { width: 160px; opacity: 1; } 100% { width: 180px; opacity: 0; } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes meanderRight { 0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; } 10% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(120vw, -50px); opacity: 0; } }
+        @keyframes meanderLeft { 0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; } 10% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-120vw, 50px); opacity: 0; } }
+        @keyframes glow { from { text-shadow: 0 0 5px rgba(216, 27, 96, 0.2); } to { text-shadow: 0 0 15px rgba(216, 27, 96, 0.6); } }
+        @keyframes floatHeart { 0%, 100% { transform: rotate(-45deg) translate(0, 0); } 50% { transform: rotate(-45deg) translate(-10px, 10px); } }
+        @keyframes flyToJar { 0% { top: 30%; left: 50%; transform: translate(-50%, -50%) scale(3) rotate(-45deg); opacity: 1; } 100% { top: 70%; left: 50%; transform: translate(-50%, -50%) scale(0.5) rotate(-45deg); opacity: 0.8; } }
+
+    </style>
+</head>
+<body>
+
+    <div id="stage-1" class="stage active">
+        <div id="monkey-metaphor">Những suy nghĩ trong đầu như những chú khỉ đang chạy nhảy lung tung...</div>
+        
+        <div id="top-message-area"></div>
+        <div class="garden-scene" id="scene-s1">
+            <div class="fountain">⛲</div>
+        </div>
+        <div id="controls-container">
+            <div id="countdown-display"></div>
+            <button id="stop-btn" onmousedown="startProcess(event)" onmouseup="cancelProcess()" onmouseleave="cancelProcess()" ontouchstart="startProcess(event)" ontouchend="cancelProcess()">🔔</button>
+            <div id="guide-text-s1">Nhấn giữ chuông để ra lệnh<br>"DỪNG LẠI"</div>
+            <div id="success-panel">
+                <div class="congrats-text">
+                    🎉 Chúc mừng chị đã hoàn thành trò chơi đầu tiên.<br>
+                    Hãy nhấn tiếp tục để tiếp tục hành trình <b>BÌNH AN</b>.
+                </div>
+                <button class="next-btn" onclick="switchStage(2)">TIẾP TỤC</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="stage-2" class="stage">
+        <div id="instruction-dragon">Nhấn giữ để HÍT VÀO...</div>
+        <div class="game-scene">
+            <div class="dragon-container">
+                <div class="fire-stream" id="fire"></div>
+                <div class="head">
+                    <div class="eye"></div>
+                    <div class="cheek"></div>
+                    <div class="mouth smile" id="mouth"></div>
+                </div>
+                <div class="body"></div>
+                <div class="belly" id="belly"></div>
+                <div class="arm left"></div>
+                <div class="arm right"></div>
+            </div>
+            <div class="pinwheel-wrapper">
+                <div class="stick"></div>
+                <div class="pinwheel-container" id="pinwheel">
+                    <div class="blade b1"></div><div class="blade b2"></div>
+                    <div class="blade b3"></div><div class="blade b4"></div>
+                    <div class="center-dot"></div>
+                </div>
+            </div>
+        </div>
+        <button id="interaction-area">Nhấn giữ</button>
+        <button id="next-btn-dragon" onclick="switchStage(3)">Tiếp tục hành trình →</button>
+    </div>
+
+    <div id="stage-3" class="stage">
+        <div id="guide-text-body">Hãy bắt đầu rà soát cơ thể mẹ và bé...</div>
+        <div id="meditation-container">
+            <svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
+                <path class="human-silhouette" d="M100,25 C112,25 120,33 120,45 C120,57 112,65 100,65 C88,65 80,57 80,45 C80,33 88,25 100,25 Z M100,70 C120,72 135,80 145,100 L165,145 C170,155 160,165 150,160 L135,130 C145,160 150,190 145,220 C142,240 130,255 115,260 L125,285 C130,295 120,300 115,295 L90,270 C90,270 110,270 100,270 C90,270 110,270 110,270 L85,295 C80,300 70,295 75,285 L85,260 C70,255 58,240 55,220 C50,190 55,160 65,130 L50,160 C40,165 30,155 35,145 L55,100 C65,80 80,72 100,70 Z" />
+            </svg>
+        </div>
+        <div id="action-buttons-body">
+            <button id="continue-btn-body" onclick="switchStage(4)">Tiếp tục hành trình →</button>
+            <button id="restart-btn-body" onclick="initBodyScan()">↺ Thực hành lại</button>
+        </div>
+    </div>
+
+    <div id="stage-4" class="stage">
+        <div id="selection-screen">
+            <h2>Cảm xúc hiện tại của chị giống bé Capybara nào nhất?</h2>
+            <p class="subtitle">Gọi tên cảm xúc giúp giảm đi sự mơ hồ trong tâm trí...</p>
+            <div class="emotion-grid">
+                <div class="capy-card" onclick="selectEmotion('Vui vẻ')"><img src="image_c8a957.png" alt="Vui vẻ" class="capy-img"><div class="capy-label">1. Vui vẻ</div></div>
+                <div class="capy-card" onclick="selectEmotion('Buồn')"><img src="image_c8a690.png" alt="Buồn" class="capy-img"><div class="capy-label">2. Buồn</div></div>
+                <div class="capy-card" onclick="selectEmotion('Lo lắng')"><img src="image_c8a654.png" alt="Lo lắng" class="capy-img"><div class="capy-label">3. Lo lắng</div></div>
+                <div class="capy-card" onclick="selectEmotion('Khó chịu')"><img src="image_c8a615.png" alt="Khó chịu" class="capy-img"><div class="capy-label">4. Khó chịu</div></div>
+                <div class="capy-card" onclick="selectEmotion('Hoảng hốt')"><img src="image_c8a5f0.png" alt="Hoảng hốt" class="capy-img"><div class="capy-label">5. Hoảng hốt</div></div>
+                <div class="capy-card" onclick="selectEmotion('Mệt mỏi')"><img src="image_c8a5b4.png" alt="Mệt mỏi" class="capy-img"><div class="capy-label">6. Mệt mỏi</div></div>
+            </div>
+        </div>
+        <div id="feedback-screen">
+            <div class="feedback-text">"Cảm ơn chị đã dũng cảm gọi tên cảm xúc.<br>Bây giờ, mình cùng trút bỏ gánh nặng nhé."</div>
+            <button class="btn-next-capy" onclick="switchStage(5)">Tiếp tục hành trình →</button>
+        </div>
+    </div>
+
+    <div id="stage-5" class="stage">
+        <div class="sun"></div>
+        <div id="hint-text-cloud">Chạm vào bầu trời để viết tiếp...</div>
+        
+        <div id="input-container-cloud">
+            <h2>Quan Sát Suy Nghĩ</h2>
+            <p>Suy nghĩ nào đang làm phiền chị?<br>Hãy viết nó ra và để gió cuốn đi.</p>
+            
+            <input type="text" id="thoughtInput" placeholder="Ví dụ: lo lắng..." autocomplete="off">
+            
+            <button id="sendBtn" class="btn-primary" onclick="createCloud(event)">Hít vào và dán lên đám mây</button>
+            
+            <button class="btn-secondary" onclick="switchStage(6)">Tiếp tục hành trình →</button>
+        </div>
+    </div>
+
+    <div id="stage-6" class="stage">
+        <div id="intro-screen-jar">
+            <div class="instruction-text">Để kết thúc bài thực hành, chị hãy dành một khoảnh khắc kết nối với em bé hoặc với chính mình.<br><br>Hãy đặt 2 tay lên ngực và thầm nói:</div>
+            <div class="mantra">"Mẹ con mình cùng Bình An nhé"</div>
+            <button class="btn" onclick="goToWrite()">Đã kết nối</button>
+        </div>
+        <div id="write-screen-jar">
+            <div style="margin-bottom: 20px; font-size: 18px; color: #880e4f;">Viết lời nhắn yêu thương lên trái tim này:</div>
+            <div class="heart-note"><textarea id="note-input" placeholder="Nhắn nhủ điều gì đó..."></textarea></div>
+            <button class="btn" onclick="saveToJar()">Cất vào Hũ Bình An</button>
+        </div>
+        <div id="jar-screen-final">
+            <div class="jar" id="jar">
+                <div class="small-heart" style="bottom: 10px; left: 30px; transform: rotate(-30deg) scale(0.8); background:#f48fb1"></div>
+                <div class="small-heart" style="bottom: 20px; right: 40px; transform: rotate(-60deg) scale(0.7); background:#f06292"></div>
+                <div class="small-heart" style="bottom: 40px; left: 60px; transform: rotate(-15deg) scale(0.6); background:#f8bbd0"></div>
+            </div>
+            <div id="final-message">Chúc hai mẹ con luôn Bình An! ❤️</div>
+            <button id="continue-btn-jar" class="btn" onclick="finishJourney()">Tiếp tục hành trình →</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CẤU HÌNH ---
+        const GOOGLE_FORM_URL = 'https://docs.google.com/forms/u/0/'; 
+        
+        let currentStage = 1;
+        const stageBackgrounds = {
+            1: "linear-gradient(to bottom, #a5d6a7, #e8f5e9)",
+            2: "linear-gradient(to bottom, #e0f7fa, #e0f7fa)",
+            3: "linear-gradient(to bottom, #e0f2f1, #b2dfdb)",
+            4: "linear-gradient(to bottom, #fff9c4, #fff176)",
+            5: "linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%)",
+            6: "linear-gradient(to top, #fce4ec, #f8bbd0)"
+        };
+
+        function switchStage(stageNum) {
+            document.querySelectorAll('.stage').forEach(el => el.classList.remove('active'));
+            document.body.style.background = stageBackgrounds[stageNum];
+            
+            const newStage = document.getElementById(`stage-${stageNum}`);
+            if(newStage) {
+                newStage.classList.add('active');
+                currentStage = stageNum;
+                if(stageNum === 2) initDragon();
+                if(stageNum === 3) initBodyScan(); 
+            }
+        }
+
+        /* --- STAGE 1: MONKEY --- */
+        const sceneS1 = document.getElementById('scene-s1');
+        const guideTextS1 = document.getElementById('guide-text-s1');
+        const countdownDisplay = document.getElementById('countdown-display');
+        const stopBtn = document.getElementById('stop-btn');
+        const successPanel = document.getElementById('success-panel');
+        let s1_monkeys = []; let s1_timer = null; let s1_count = 0; let s1_isSuccess = false;
+
+        function createMonkeys(amount) {
+            for (let i = 0; i < amount; i++) {
+                const monkey = document.createElement('div'); monkey.classList.add('monkey', 'running');
+                monkey.innerText = Math.random() > 0.5 ? '🐒' : '🙉';
+                let left = Math.random() * 90; let top = Math.random() * 80;
+                monkey.style.left = left + '%'; monkey.style.top = top + '%';
+                monkey.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                sceneS1.appendChild(monkey); s1_monkeys.push(monkey);
+            }
+        }
+        createMonkeys(20);
+
+        function startProcess(e) {
+            if (s1_isSuccess) return;
+            if (e.cancelable) e.preventDefault();
+            s1_count = 1; guideTextS1.innerText = "Giữ yên..."; guideTextS1.style.opacity = 0.5;
+            
+            const metaphor = document.getElementById('monkey-metaphor');
+            if(metaphor) metaphor.style.opacity = '0';
+
+            showNumber(1);
+            s1_timer = setInterval(() => { s1_count++; if (s1_count <= 3) showNumber(s1_count); else finishGameS1(); }, 1000);
+        }
+        function showNumber(num) { countdownDisplay.innerHTML = `<div class="count-number">${num}</div>`; }
+        function cancelProcess() {
+            if (s1_isSuccess) return;
+            clearInterval(s1_timer); countdownDisplay.innerHTML = ''; guideTextS1.innerText = 'Nhấn giữ chuông để ra lệnh\n"DỪNG LẠI"'; guideTextS1.style.opacity = 1; s1_count = 0;
+            const metaphor = document.getElementById('monkey-metaphor');
+            if(metaphor) metaphor.style.opacity = '1';
+        }
+        function finishGameS1() {
+            clearInterval(s1_timer); s1_isSuccess = true; countdownDisplay.innerHTML = ''; guideTextS1.innerText = '';
+            s1_monkeys.forEach(m => m.style.animationPlayState = 'paused');
+            countdownDisplay.innerHTML = '<span style="color:#00695c; font-size:24px; font-weight:bold;">Tĩnh lặng...</span>';
+            setTimeout(() => {
+                countdownDisplay.innerHTML = ''; s1_monkeys.forEach(m => m.classList.add('fade-out'));
+                stopBtn.style.display = 'none';
+                document.getElementById('top-message-area').innerHTML = `<div class="safe-quote">✨<br>"Dừng lại,<br>mình đang ở đây và an toàn."</div>`;
+                setTimeout(() => { successPanel.style.display = 'flex'; }, 1000);
+            }, 3000);
+        }
+
+        /* --- STAGE 2: DRAGON --- */
+        const pinwheel = document.getElementById('pinwheel');
+        const belly = document.getElementById('belly');
+        const fire = document.getElementById('fire');
+        const mouth = document.getElementById('mouth'); 
+        const instructionDragon = document.getElementById('instruction-dragon');
+        const dragonBtn = document.getElementById('interaction-area');
+        let s2_rotation = 0; let s2_speed = 2; let s2_isHolding = false; let s2_energy = 0;
+
+        function initDragon() { s2_speed = 2; s2_rotation = 0; }
+        function gameLoopS2() {
+            if (s2_isHolding) { s2_speed = s2_speed * 0.85; if (s2_speed < 0.1) s2_speed = 0; if (s2_energy < 100) s2_energy += 0.8; }
+            else { if (s2_speed > 5) s2_speed *= 0.995; }
+            s2_rotation += s2_speed; pinwheel.style.transform = `rotate(${s2_rotation}deg)`;
+            requestAnimationFrame(gameLoopS2);
+        }
+        gameLoopS2();
+
+        function startBreath() {
+            s2_isHolding = true; instructionDragon.textContent = "Dừng lại... Hít sâu..."; instructionDragon.style.color = "#4caf50";
+            dragonBtn.textContent = "Đang hít vào..."; belly.classList.add("inhaling"); fire.classList.remove("active"); mouth.className = "mouth smile";
+        }
+        function releaseBreath() {
+            if (!s2_isHolding) return;
+            s2_isHolding = false;
+            let boost = 25 + (s2_energy * 0.5); s2_speed = boost; 
+            instructionDragon.textContent = "Thở ra ... kéo dài"; instructionDragon.style.color = "#ff5722";
+            dragonBtn.textContent = "Nhấn giữ để Hít tiếp"; belly.classList.remove("inhaling"); fire.classList.add("active"); mouth.className = "mouth blowing";
+        }
+        dragonBtn.addEventListener('mousedown', startBreath); dragonBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startBreath(); });
+        window.addEventListener('mouseup', releaseBreath); window.addEventListener('touchend', releaseBreath);
+
+        /* --- STAGE 3: BODY SCAN --- */
+        const bodySteps = [
+            { id: 'head', text: "Hít sâu... thở ra và thả lỏng vùng đầu, trán và cơ hàm.", points: [{ top: '15%', left: '50%' }] },
+            { id: 'shoulders', text: "Hít sâu... thở ra và buông lỏng đôi vai... cảm nhận sự nhẹ nhõm lan tỏa xuống cánh tay.", points: [{ top: '32%', left: '38%' }, { top: '32%', left: '62%' }] },
+            { id: 'chest', text: "Hít sâu... thở ra và cảm nhận nhịp tim bình an... lồng ngực mở rộng đón nhận oxy.", points: [{ top: '38%', left: '50%' }] },
+            { id: 'belly', text: "Đặt tay lên bụng... gửi tình yêu thương và sự thư giãn đến em bé.", points: [{ top: '58%', left: '50%' }] },
+            { id: 'hips', text: "Hít sâu... thở ra và thả lỏng vùng hông và thắt lưng... nơi đang nâng đỡ cơ thể mẹ và bé.", points: [{ top: '75%', left: '50%' }] },
+            { id: 'arms', text: "Hít sâu... thở ra và thư giãn hai cánh tay, bàn tay và các ngón tay mềm mại.", points: [{ top: '52%', left: '22%' }, { top: '52%', left: '78%' }] },
+            { id: 'legs', text: "Hít sâu... thở ra và cảm nhận sự vững chãi từ đôi chân... thả lỏng xuống tận các ngón chân.", points: [{ top: '88%', left: '35%' }, { top: '88%', left: '65%' }] }
+        ];
+        let s3_currentStep = 0;
+        const containerBody = document.getElementById('meditation-container');
+        const guideTextBody = document.getElementById('guide-text-body');
+        const actionButtonsBody = document.getElementById('action-buttons-body');
+
+        function initBodyScan() {
+            s3_currentStep = 0; containerBody.innerHTML = '<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg"><path class="human-silhouette" d="M100,25 C112,25 120,33 120,45 C120,57 112,65 100,65 C88,65 80,57 80,45 C80,33 88,25 100,25 Z M100,70 C120,72 135,80 145,100 L165,145 C170,155 160,165 150,160 L135,130 C145,160 150,190 145,220 C142,240 130,255 115,260 L125,285 C130,295 120,300 115,295 L90,270 C90,270 110,270 100,270 C90,270 110,270 110,270 L85,295 C80,300 70,295 75,285 L85,260 C70,255 58,240 55,220 C50,190 55,160 65,130 L50,160 C40,165 30,155 35,145 L55,100 C65,80 80,72 100,70 Z" /></svg>';
+            actionButtonsBody.style.display = 'none';
+            bodySteps.forEach((step, idx) => {
+                step.points.forEach(point => {
+                    const dot = document.createElement('div'); dot.className = 'dot';
+                    dot.style.top = point.top; dot.style.left = point.left;
+                    dot.onclick = (e) => { e.preventDefault(); handleDotClick(idx); };
+                    dot.dataset.stepIndex = idx; containerBody.appendChild(dot);
+                });
+            });
+            activateStepBody(0);
+        }
+        function activateStepBody(index) {
+            if(index >= bodySteps.length) { finishGameBody(); return; }
+            guideTextBody.style.opacity = 0;
+            setTimeout(() => { guideTextBody.innerText = bodySteps[index].text; guideTextBody.style.opacity = 1; }, 500);
+            document.querySelectorAll(`.dot[data-step-index="${index}"]`).forEach(d => d.classList.add('active'));
+        }
+        function handleDotClick(idx) {
+            if(idx !== s3_currentStep) return;
+            if(navigator.vibrate) navigator.vibrate(50);
+            document.querySelectorAll(`.dot[data-step-index="${idx}"]`).forEach(d => {
+                d.classList.remove('active'); d.classList.add('relaxed');
+                const rip = document.createElement('div'); rip.className = 'ripple';
+                rip.style.top = d.style.top; rip.style.left = d.style.left;
+                containerBody.appendChild(rip); setTimeout(()=>rip.remove(), 1200);
+            });
+            s3_currentStep++; setTimeout(() => activateStepBody(s3_currentStep), 1500);
+        }
+        function finishGameBody() { guideTextBody.innerHTML = "Tuyệt vời. Mẹ và bé đã hoàn toàn thư giãn.<br>Hãy giữ cảm giác bình an này nhé."; actionButtonsBody.style.display = 'flex'; }
+
+        /* --- STAGE 4: CAPYBARA --- */
+        function selectEmotion(name) {
+            if(navigator.vibrate) navigator.vibrate(30);
+            const s1 = document.getElementById('selection-screen'); const s2 = document.getElementById('feedback-screen');
+            s1.style.opacity = '0'; s1.style.pointerEvents = 'none';
+            setTimeout(() => { s1.style.display = 'none'; s2.style.display = 'block'; setTimeout(() => s2.style.opacity = '1', 50); }, 500);
+        }
+
+        /* --- STAGE 5: CLOUDS --- */
+        const inputContainerCloud = document.getElementById('input-container-cloud');
+        const thoughtInput = document.getElementById('thoughtInput');
+        const hintTextCloud = document.getElementById('hint-text-cloud');
+        let s5_isHidden = false; const cloudColors = ['#FFFFFF', '#FFEBEE', '#FFF9C4', '#E1F5FE', '#F3E5F5', '#E0F2F1'];
+        
+        function createCloud(e) {
+            if(e) e.stopPropagation();
+            const txt = thoughtInput.value.trim(); if(txt==="") { thoughtInput.focus(); return; }
+            inputContainerCloud.classList.add('hidden'); 
+            
+            // CẬP NHẬT DÒNG CHỮ TRÊN CAO KHI MÂY TRÔI
+            hintTextCloud.innerText = `Thở ra và quan sát đám mây trôi cùng cảm xúc ${txt}...`;
+            hintTextCloud.classList.add('show'); 
+            s5_isHidden = true;
+            
+            // Placeholder cho lần sau
+            setTimeout(() => thoughtInput.placeholder = "Còn suy nghĩ nào nữa không?", 500);
+            
+            const wrap = document.createElement('div'); wrap.className = 'cloud-wrapper ' + (Math.random()>0.5?'flying-right':'flying-left');
+            wrap.style.marginTop = `${Math.floor(Math.random()*60)-30}px`;
+            const body = document.createElement('div'); body.className = 'cloud-body'; body.innerText = txt;
+            body.style.setProperty('--cloud-color', cloudColors[Math.floor(Math.random()*cloudColors.length)]);
+            wrap.appendChild(body); document.getElementById('stage-5').appendChild(wrap);
+            thoughtInput.value = ''; thoughtInput.blur();
+            
+            setTimeout(() => { 
+                wrap.remove(); 
+                if(s5_isHidden) { 
+                    inputContainerCloud.classList.remove('hidden'); 
+                    hintTextCloud.classList.remove('show'); 
+                    // Reset lại dòng chữ mặc định
+                    setTimeout(() => hintTextCloud.innerText = "Chạm vào bầu trời để viết tiếp...", 500);
+                    s5_isHidden=false; 
+                } 
+            }, 20000);
+        }
+        document.getElementById('stage-5').addEventListener('click', () => { 
+            if(s5_isHidden) { 
+                inputContainerCloud.classList.remove('hidden'); 
+                hintTextCloud.classList.remove('show'); 
+                // Reset lại dòng chữ mặc định khi chạm
+                setTimeout(() => hintTextCloud.innerText = "Chạm vào bầu trời để viết tiếp...", 500);
+                s5_isHidden=false; 
+            } 
+        });
+        inputContainerCloud.addEventListener('click', e => e.stopPropagation());
+
+        /* --- STAGE 6: JAR --- */
+        const introJar = document.getElementById('intro-screen-jar');
+        const writeJar = document.getElementById('write-screen-jar');
+        const jarScreenFinal = document.getElementById('jar-screen-final');
+        const noteInput = document.getElementById('note-input');
+        const jar = document.getElementById('jar');
+        const finalMsg = document.getElementById('final-message');
+        const contBtnJar = document.getElementById('continue-btn-jar');
+
+        function goToWrite() {
+            introJar.style.opacity = '0';
+            setTimeout(() => { introJar.style.display = 'none'; writeJar.style.display = 'flex'; setTimeout(() => writeJar.style.opacity='1', 50); }, 500);
+        }
+        function saveToJar() {
+            const msg = noteInput.value.trim(); if(msg==="") { alert("Chị hãy viết vài dòng nhé!"); return; }
+            writeJar.style.opacity = '0';
+            setTimeout(() => { writeJar.style.display = 'none'; jarScreenFinal.style.display = 'flex'; animateHeartFlying(); }, 500);
+        }
+        function animateHeartFlying() {
+            const fly = document.createElement('div'); fly.className = 'small-heart'; fly.style.animation = "flyToJar 1.5s ease-in-out forwards";
+            document.body.appendChild(fly);
+            setTimeout(() => {
+                fly.remove();
+                const land = document.createElement('div'); land.className = 'small-heart';
+                land.style.bottom = '50px'; land.style.left = '80px'; land.style.transform = 'rotate(-45deg) scale(0.8)';
+                jar.appendChild(land);
+                finalMsg.style.opacity = "1";
+                contBtnJar.style.display = "block"; setTimeout(() => contBtnJar.style.opacity = "1", 100);
+            }, 1500);
+        }
+        function finishJourney() {
+            alert("Đang quay về Google Form...");
+            window.location.href = GOOGLE_FORM_URL;
+        }
+
+    </script>
+</body>
+</html>
